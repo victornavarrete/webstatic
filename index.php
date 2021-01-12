@@ -1,12 +1,10 @@
 <?php
 
-/*
-
+/* 
 APACHE (.htaccess)
 
 	Options -Indexes
-	DirectoryIndex index.php 
-	 
+	DirectoryIndex index.php
 	RewriteEngine On
 	RewriteCond %{REQUEST_FILENAME} !-f
 	RewriteCond %{REQUEST_FILENAME} !-d
@@ -40,8 +38,7 @@ NGINX
 			fastcgi_index index.php;
 			fastcgi_param SCRIPT_FILENAME $document_root/$fastcgi_script_name;
 			include fastcgi_params;
-		}
-
+		} 
 	}
 
 */
@@ -56,9 +53,7 @@ NGINX
 				'desc' => 'webstatic is a basic webpage with a index.php',
 				'ga_key' => 'UA-XXXXX-Y', 
 				]; 
-	define('CONFIG', $configs ); 
-
-
+	define('CONFIG', $configs );  
 
 	define('VIEWS_PATH', __DIR__.'/views'); 
 	define('PARTIALS_PATH', __DIR__.'/partials'); 
@@ -83,10 +78,8 @@ NGINX
 	define('PROTOCOL', is_http_secure()?'https://':'http://');
 
 	function base_url($path){    
-		$base_url = BASE_URL;  
-
-		if(is_array($path) && !empty($path)){ $path = implode('/', $path); }  
-
+		$base_url = BASE_URL;   
+		if(is_array($path) && !empty($path)){ $path = implode('/', $path); }   
 		if(empty($base_url )){ 
 			if (isset($_SERVER['HTTP_HOST']) || isset($_SERVER['SERVER_NAME']) || isset($_SERVER['SERVER_ADDR'])) {    
 				if($_SERVER['HTTP_HOST']){
@@ -95,8 +88,7 @@ NGINX
 					$base_url =  $_SERVER['SERVER_NAME'];
 				}else{
 					$base_url =  $_SERVER['SERVER_ADDR'];
-				}  
-				 
+				}
 			} else {
 				$base_url = 'localhost';
 			}
@@ -121,8 +113,7 @@ NGINX
 		return 'n-a';
 		}
 		return $text;
-	} 
-
+	}
 
 	function date_human($string){ 
 		return date('d/m/Y', strtotime($string)); 
@@ -130,8 +121,7 @@ NGINX
 
 	function load_partial($path){
 		$path = rtrim($path, '/'); 
-		$base = PARTIALS_PATH.DIRECTORY_SEPARATOR.$path; 
-
+		$base = PARTIALS_PATH.DIRECTORY_SEPARATOR.$path;
 		if(file_exists($base.'.php')){ 
 			include($base.'.php'); 
 		}elseif(file_exists($base.'.html')){ 
@@ -154,8 +144,7 @@ NGINX
 
 	function load_page($path, $show_not_found=true){
 		$path = rtrim($path, '/'); 
-		$base = VIEWS_PATH.DIRECTORY_SEPARATOR.$path; 
-
+		$base = VIEWS_PATH.DIRECTORY_SEPARATOR.$path;  
 		if(file_exists($base.'.php')){ 
 			include($base.'.php'); 
 		}elseif(file_exists($base.'.html')){ 
