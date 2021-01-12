@@ -1,0 +1,2 @@
+# webstatic
+Basic web static
