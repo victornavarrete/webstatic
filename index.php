@@ -49,14 +49,18 @@ NGINX
 	define('BASE_URL', 'webstatic.com' ); 
 
 	$configs = [
-				'name' => 'webstatic',
+				'name' => 'webstatic', 
 				'desc' => 'webstatic is a basic webpage with a index.php',
 				'ga_key' => 'UA-XXXXX-Y', 
+				'page_default' => 'home',
 				]; 
 	define('CONFIG', $configs );  
 
 	define('VIEWS_PATH', __DIR__.'/views'); 
 	define('PARTIALS_PATH', __DIR__.'/partials'); 
+
+	// COMPOSER 
+	// require __DIR__ . '/vendor/autoload.php';
    
 	function is_http_secure(){ 
 		if ( ! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
@@ -153,14 +157,40 @@ NGINX
 			include($base.DIRECTORY_SEPARATOR.'index.php'); 
 		}elseif(file_exists($base.DIRECTORY_SEPARATOR.'index.html')){ 
 			include($base.DIRECTORY_SEPARATOR.'index.html'); 
-		}elseif($show_not_found){  
-			set_error(404,'404 Not Found');
-			exit(1);  
-		}  
-	} 
+		}else{
+			/*
+			$router = new AltoRouter(); 
+			$router->map( 'GET', '/post/[i:id]/', function( $id ) { 
+				$posts = [
+					['title'=>'test 1','text'=>'lorem ipsum'],
+					['title'=>'test 2','text'=>'lorem ipsum']
+				];   
+				$post = $posts[$id];
+				if($post){
+					require VIEWS_PATH.DIRECTORY_SEPARATOR.'post.php';
+				}else{
+					set_error(404,'404 Not Found');
+				}  
+			});
+ 
+			$match = $router->match(); 
+			if( is_array($match) && is_callable( $match['target'] ) ) {
+				call_user_func_array( $match['target'], $match['params'] ); 
+			} else {
+				 if($show_not_found){  
+					set_error(404,'404 Not Found');
+					exit(1);  
+				}  
+			}
+			*/
 
-	// COMPOSER 
-	// require __DIR__ . '/vendor/autoload.php';
+			if($show_not_found){  
+				set_error(404,'404 Not Found');
+				exit(1);  
+			}
+		}  
+	}
+	
 	$path_only = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); 
-	$path_only = in_array($path_only, ['','/'])?'home':$path_only;
+	$path_only = in_array($path_only, ['','/'])?CONFIG['page_default']:$path_only;
 	load_page($path_only, true); 
