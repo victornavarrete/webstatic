@@ -42,25 +42,40 @@ NGINX
 	}
 
 */
-	 
-	define("ENVIRONMENT", 'production' );
-	define("LOCALE", 'es_CL' );
-	define("TIMEZONE", 'America/Santiago' ); 
-	define('BASE_URL', 'webstatic.com' ); 
+
+	$env = ($_ENV["ENV"])?$_ENV["ENV"]:null;
+	switch ($env) {
+		case 'development':
+			define("ENVIRONMENT", 'development');
+			define("LOCALE", 'es_CL');
+			define("TIMEZONE", 'America/Santiago'); 
+			define('BASE_URL', 'webstatic.com'); 
+			define('WEB_TITLE', 'webstatic (development mode)'); 
+			break;  
+		default:
+			define("ENVIRONMENT", 'production');
+			define("LOCALE", 'es_CL');
+			define("TIMEZONE", 'America/Santiago'); 
+			define('BASE_URL', 'webstatic.com'); 
+			define('WEB_TITLE', 'webstatic'); 
+			break;
+	}
 
 	$configs = [
-				'name' => 'webstatic', 
+				'name' => WEB_TITLE, 
 				'desc' => 'webstatic is a basic webpage with a index.php',
 				'ga_key' => 'UA-XXXXX-Y', 
 				'page_default' => 'home',
 				]; 
+
+
 	define('CONFIG', $configs );  
 
-	define('VIEWS_PATH', __DIR__.'/views'); 
+	define('PAGE_PATH', __DIR__.'/pages'); 
 	define('PARTIALS_PATH', __DIR__.'/partials'); 
 
 	// COMPOSER 
-	// require __DIR__ . '/vendor/autoload.php';
+	require __DIR__ . '/vendor/autoload.php';
    
 	function is_http_secure(){ 
 		if ( ! empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) !== 'off')
@@ -114,7 +129,7 @@ NGINX
 		$text = strtolower($text);
 		$text = trim($text, " \t\n\r\0\x0B-");
 		if (empty($text)) {
-		return 'n-a';
+			return 'n-a';
 		}
 		return $text;
 	}
@@ -123,74 +138,74 @@ NGINX
 		return date('d/m/Y', strtotime($string)); 
 	} 
 
-	function load_partial($path){
+	function load_partial($path, $var_array =array()){ 
 		$path = rtrim($path, '/'); 
-		$base = PARTIALS_PATH.DIRECTORY_SEPARATOR.$path;
-		if(file_exists($base.'.php')){ 
-			include($base.'.php'); 
-		}elseif(file_exists($base.'.html')){ 
-			include($base.'.html'); 
-		}elseif(file_exists($base.DIRECTORY_SEPARATOR.'index.php')){ 
-			include($base.DIRECTORY_SEPARATOR.'index.php'); 
-		}elseif(file_exists($base.DIRECTORY_SEPARATOR.'index.html')){ 
-			include($base.DIRECTORY_SEPARATOR.'index.html'); 
+		$_local_filepath = PARTIALS_PATH.DIRECTORY_SEPARATOR.$path; 
+		extract($var_array);  
+		if(file_exists($_local_filepath.'.php')){ 
+			include($_local_filepath.'.php'); 
+		}elseif(file_exists($_local_filepath.DIRECTORY_SEPARATOR.'index.php')){ 
+			include($_local_filepath.DIRECTORY_SEPARATOR.'index.php'); 
 		}  
 	}
 
 	function set_error($code = 404, $text ='404 Not Found'){
 		header($_SERVER["SERVER_PROTOCOL"].' '.$text, true, $code);  
-		if(file_exists(VIEWS_PATH.DIRECTORY_SEPARATOR.$code.'.html')){ 
-			include(VIEWS_PATH.DIRECTORY_SEPARATOR.$code.'.html'); 
+		if(file_exists(PAGE_PATH.DIRECTORY_SEPARATOR.$code.'.html')){ 
+			include(PAGE_PATH.DIRECTORY_SEPARATOR.$code.'.html'); 
 		}else{
 			echo '404 Not Found.';
 		} 
+
 	}
 
-	function load_page($path, $show_not_found=true){
-		$path = rtrim($path, '/'); 
-		$base = VIEWS_PATH.DIRECTORY_SEPARATOR.$path;  
-		if(file_exists($base.'.php')){ 
-			include($base.'.php'); 
-		}elseif(file_exists($base.'.html')){ 
-			include($base.'.html'); 
-		}elseif(file_exists($base.DIRECTORY_SEPARATOR.'index.php')){ 
-			include($base.DIRECTORY_SEPARATOR.'index.php'); 
-		}elseif(file_exists($base.DIRECTORY_SEPARATOR.'index.html')){ 
-			include($base.DIRECTORY_SEPARATOR.'index.html'); 
+	function webstatic($uri_base, $show_not_found=true){
+		$uri = rtrim($uri_base, '/');  
+		$filepath = PAGE_PATH.DIRECTORY_SEPARATOR.$uri;  
+		if(file_exists($filepath.'.php')){ 
+			include($filepath.'.php'); 
+		}elseif(file_exists($filepath.'.html')){ 
+			include($filepath.'.html'); 
+		}elseif(file_exists($filepath.DIRECTORY_SEPARATOR.'index.php')){ 
+			include($filepath.DIRECTORY_SEPARATOR.'index.php'); 
+		}elseif(file_exists($filepath.DIRECTORY_SEPARATOR.'index.html')){ 
+			include($filepath.DIRECTORY_SEPARATOR.'index.html'); 
 		}else{
-			/*
-			$router = new AltoRouter(); 
-			$router->map( 'GET', '/post/[i:id]/', function( $id ) { 
+
+			// Dinamic router by Altorouter
+			$r = new AltoRouter();  
+			$r->map( 'GET', '/post/[i:id][*:trailing]', function( $id , $trailing ) {   
+				// example from array (from db is better with Medoo)
 				$posts = [
+					['title'=>'test 0','text'=>'lorem ipsum'],
 					['title'=>'test 1','text'=>'lorem ipsum'],
 					['title'=>'test 2','text'=>'lorem ipsum']
-				];   
+				]; 
+
 				$post = $posts[$id];
 				if($post){
-					require VIEWS_PATH.DIRECTORY_SEPARATOR.'post.php';
+					load_partial('post', ['post'=>$post]);
 				}else{
-					set_error(404,'404 Not Found');
+					set_error(404,'404 Not Found');   
+					die();
 				}  
 			});
  
-			$match = $router->match(); 
+			$match = $r->match($uri,'GET'); 
+			unset($r);
 			if( is_array($match) && is_callable( $match['target'] ) ) {
 				call_user_func_array( $match['target'], $match['params'] ); 
 			} else {
 				 if($show_not_found){  
 					set_error(404,'404 Not Found');
-					exit(1);  
+					die();
 				}  
-			}
-			*/
-
-			if($show_not_found){  
-				set_error(404,'404 Not Found');
-				exit(1);  
-			}
+			} 
+ 
 		}  
 	}
-	
-	$path_only = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); 
-	$path_only = in_array($path_only, ['','/'])?CONFIG['page_default']:$path_only;
-	load_page($path_only, true); 
+
+	// prepare uri
+	$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH); 
+	$uri = in_array($uri, ['','/'])?CONFIG['page_default']:$uri; 
+	webstatic($uri, true); 
